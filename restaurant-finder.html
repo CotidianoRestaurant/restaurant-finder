@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant-Finder</title>
+    <style>
+        /* Allgemeine Styles für das Layout */
+        body {
+            font-family: "Texta Alt Regular", sans-serif;
+            color: rgb(5, 44, 55);
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            font-family: "Texta Alt Heavy", sans-serif;
+            color: rgb(163, 138, 95);
+            font-size: 120%; /* 15% kleiner als die normale Größe */
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: rgb(5, 44, 55);
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 10px 0;
+            display: block;
+            width: auto; /* Button wird schmaler */
+            margin-left: auto;
+            margin-right: auto;
+            border-radius: 25px; /* Abgerundete Ecken */
+            font-weight: bold; /* Fett */
+        }
+        button:hover {
+            background-color: rgb(163, 138, 95);
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .restaurant-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 10px;
+        }
+        .restaurant-info {
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+        .restaurant-info b {
+            font-family: "Texta Alt Heavy", sans-serif;
+            color: rgb(163, 138, 95);
+        }
+        .restaurant-info p {
+            margin: 5px 0;
+        }
+        .restaurant-logo {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .restaurant-item-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .restaurant-item-content .restaurant-info {
+            text-align: left;
+            width: 80%;
+        }
+        .restaurant-item-content .restaurant-logo {
+            max-width: 100px; /* Logo doppelt so groß */
+            max-height: 100px;
+            margin-left: 20px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+        }
+        .back-button {
+            background-color: rgb(163, 138, 95);
+            color: rgb(5, 44, 55);
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold; /* Fettschrift */
+            border-radius: 25px; /* Abgerundete Ecken */
+        }
+        /* Responsives Design */
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 16px;
+            }
+            .restaurant-item {
+                text-align: center;
+            }
+            .restaurant-item-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .restaurant-info {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Finden Sie das nächste Restaurant für die Abholung</h2>
+    
+    <div class="container">
+        <button onclick="findNearestRestaurant()">Standort verwenden</button>
+        
+        <div id="restaurant-list"></div>
+        <button id="back-button" class="back-button" style="display: none;" onclick="resetSearch()">Zurück</button>
+    </div>
+
+    <script>
+        // Liste der Restaurants mit Koordinaten, Adressen, Webshop-Links und Logo-URL
+        const restaurants = [
+            { name: "Cotidiano Gärtnerplatz", address: "Gärtnerplatz 6, 80469 München", lat: 48.13234, lng: 11.5766, shopLink: "https://mylightspeed.app/YWFSYFLL/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Schwabing", address: "Hohenzollernstraße 11, 80801 München", lat: 48.15972, lng: 11.58334, shopLink: "https://mylightspeed.app/YHYXGGZI/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Promenadeplatz", address: "Maxburgstraße 4, 80333 München", lat: 48.14024, lng: 11.57020, shopLink: "https://mylightspeed.app/OKVGCVZF/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Dörnberg", address: "Joseph-Dahlem-Straße 5, 93049 Regensburg", lat: 49.01299, lng: 12.08705, shopLink: "https://mylightspeed.app/YREDBIBK/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Marktplatz", address: "Marktstraße 1-3, 70173 Stuttgart", lat: 48.77513, lng: 9.17985, shopLink: "https://mylightspeed.app/TKQZQIXA/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Kiellinie", address: "Reventlouallee 2, 24105 Kiel", lat: 54.33416, lng: 10.15240, shopLink: "https://mylightspeed.app/NITFDAZM/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Pasing", address: "Bodenseestraße 1, 81241 München", lat: 48.14684, lng: 11.45884, shopLink: "https://mylightspeed.app/IXMPEIEQ/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Alter Wall", address: "Alter Wall 22, 20457 Hamburg", lat: 53.55073, lng: 9.99028, shopLink: "https://mylightspeed.app/LVPUHSNB/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Mühlenkamp", address: "Hofweg 104, 22085 Hamburg", lat: 53.57942, lng: 10.01367, shopLink: "https://mylightspeed.app/PFRUMMHI/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Altstadt", address: "Altstadt 362, 84028 Landshut", lat: 48.67190, lng: 12.15762, shopLink: "https://mylightspeed.app/DEWYSMYH/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" },
+            { name: "Cotidiano Lange Reihe", address: "Lange Reihe 29, 20099 Hamburg", lat: 53.55676, lng: 10.00994, shopLink: "https://mylightspeed.app/BMFZKYHN/C-ordering/menu", logo: "https://i.imgur.com/LSMqmj2.png" }
+        ];
+
+        // Funktion zur Berechnung der Entfernung (Haversine-Formel)
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // Erdradius in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // Standort ermitteln und Restaurants anzeigen
+        function findNearestRestaurant() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    let nearbyRestaurants = [];
+
+                    // Restaurants im 5 km Radius finden
+                    restaurants.forEach(restaurant => {
+                        const distance = calculateDistance(userLat, userLng, restaurant.lat, restaurant.lng);
+                        if (distance <= 5) { // 5 km Radius
+                            nearbyRestaurants.push({ restaurant, distance });
+                        }
+                    });
+
+                    // Wenn weniger als 3 Restaurants im 5 km Radius gefunden werden, erweitere den Radius auf 10 km
+                    if (nearbyRestaurants.length < 3) {
+                        restaurants.forEach(restaurant => {
+                            const distance = calculateDistance(userLat, userLng, restaurant.lat, restaurant.lng);
+                            if (distance <= 10) { // 10 km Radius
+                                nearbyRestaurants.push({ restaurant, distance });
+                            }
+                        });
+                    }
+
+                    nearbyRestaurants.sort((a, b) => a.distance - b.distance);
+                    displayRestaurants(nearbyRestaurants.slice(0, 3), userLat, userLng); // Zeige maximal 3 Restaurants
+                });
+            } else {
+                alert("Geolocation wird nicht unterstützt.");
+            }
+        }
+
+        // Restaurants anzeigen
+        function displayRestaurants(restaurants, userLat, userLng) {
+            const restaurantList = document.getElementById('restaurant-list');
+            restaurantList.innerHTML = '';
+
+            restaurants.forEach(item => {
+                const restaurant = item.restaurant;
+                const div = document.createElement('div');
+                div.className = 'restaurant-item';
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'restaurant-info';
+                infoDiv.innerHTML = `
+                    <b>${restaurant.name}</b>
+                    <p>${restaurant.address}</p>
+                    <p>Entfernung: ${item.distance.toFixed(2)} km</p>
+                `;
+
+                const logo = document.createElement('img');
+                logo.src = restaurant.logo;
+                logo.alt = `${restaurant.name} Logo`;
+                logo.className = 'restaurant-logo';
+
+                const button = document.createElement('button');
+                button.textContent = "Zum Abholshop";
+                button.onclick = () => window.open(restaurant.shopLink, "_blank");
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                buttonContainer.appendChild(button);
+
+                const restaurantContent = document.createElement('div');
+                restaurantContent.className = 'restaurant-item-content';
+                restaurantContent.appendChild(infoDiv);
+                restaurantContent.appendChild(logo);
+
+                div.appendChild(restaurantContent);
+                div.appendChild(buttonContainer);
+
+                restaurantList.appendChild(div);
+            });
+
+            // "Zurück" Button anzeigen
+            document.getElementById('back-button').style.display = 'block';
+            document.querySelector('button').style.display = 'none';
+        }
+
+        // Zurück zur Suche
+        function resetSearch() {
+            document.getElementById('restaurant-list').innerHTML = '';
+            document.getElementById('back-button').style.display = 'none';
+            document.querySelector('button').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
